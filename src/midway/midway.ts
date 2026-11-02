@@ -475,7 +475,7 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     stepFireworks(
       fireworks,
       dt,
-      fireworksOn(night),
+      !calm && fireworksOn(night),
       {
         left: camera.x + 20,
         right: camera.x + view.w - 20,
