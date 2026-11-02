@@ -64,8 +64,14 @@ export function upTime(state: WhackAMoleState): number {
   return UP_TIME.start + (UP_TIME.end - UP_TIME.start) * progress(state);
 }
 
+/** True when a canvas point lands on the visible part of a mole that is up. */
 export function isHit(hole: Hole, x: number, y: number): boolean {
-  return hole.up > 0 && Math.hypot(x - hole.x, y - (hole.y - MOLE_RADIUS / 2)) <= MOLE_RADIUS;
+  // drawMole clips the mole at the hole's rim, so nothing below hole.y is mole.
+  return (
+    hole.up > 0 &&
+    y <= hole.y &&
+    Math.hypot(x - hole.x, y - (hole.y - MOLE_RADIUS / 2)) <= MOLE_RADIUS
+  );
 }
 
 /** Whacks the mole at a canvas point, if one is up there. Returns true on a hit. */

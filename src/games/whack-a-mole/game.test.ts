@@ -68,6 +68,16 @@ describe('whack-a-mole', () => {
     expect(state.score).toBe(0);
   });
 
+  it('scores nothing for a click below the visible mole', () => {
+    const state = createState();
+    const hole = state.holes[0];
+    hole.up = 1;
+    // Inside the mole's full circle, but below the rim it is clipped at and below the hole.
+    expect(whack(state, hole.x, hole.y + 18)).toBe(false);
+    expect(hole.up).toBe(1);
+    expect(state.score).toBe(0);
+  });
+
   it('pops moles faster and for less time as the round goes on', () => {
     const state = createState();
     expect(popInterval(state)).toBeCloseTo(POP_INTERVAL.start);
