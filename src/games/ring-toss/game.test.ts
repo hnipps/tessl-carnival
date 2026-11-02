@@ -9,16 +9,16 @@ import {
   bottleAt,
   createState,
   landingY,
+  neckY,
   roundOverButtonAt,
   step,
   throwRing,
 } from './game';
 
-/** Throws a ring at exactly this bottle and lets it land. */
+/** Sets the power meter so a throw lands at `y`, throws at `x` and lets the ring land. */
 function throwAt(state: ReturnType<typeof createState>, x: number, y: number) {
   state.power = (NEAR_Y - y) / (NEAR_Y - FAR_Y);
   throwRing(state, x);
-  state.ring!.toY = y;
   step(state, FLIGHT_TIME);
 }
 
@@ -61,9 +61,24 @@ describe('ring toss', () => {
   it('scores a ring that lands on a bottle neck', () => {
     const state = createState();
     const bottle = state.bottles[0];
-    throwAt(state, bottle.x, bottle.y);
+    throwAt(state, bottle.x, neckY(bottle));
     expect(state.score).toBe(bottle.points);
-    expect(state.landed).toEqual([{ x: bottle.x, y: bottle.y, bottle }]);
+    expect(state.landed).toHaveLength(1);
+    expect(state.landed[0].x).toBe(bottle.x);
+    expect(state.landed[0].y).toBeCloseTo(neckY(bottle));
+    expect(state.landed[0].bottle).toBe(bottle);
+  });
+
+  it('scores a ring aimed at the cap, and not one on the body', () => {
+    const hit = createState();
+    const bottle = hit.bottles[0];
+    throwAt(hit, bottle.x, bottle.y - 20);
+    expect(hit.score).toBe(bottle.points);
+
+    const miss = createState();
+    throwAt(miss, bottle.x, bottle.y + 14);
+    expect(miss.score).toBe(0);
+    expect(miss.landed[0].bottle).toBeNull();
   });
 
   it('scores nothing for a ring that misses every bottle', () => {
@@ -93,8 +108,8 @@ describe('ring toss', () => {
   it('only counts a landing within the neck radius', () => {
     const { bottles } = createState();
     const bottle = bottles[0];
-    expect(bottleAt(bottles, bottle.x + NECK_RADIUS - 1, bottle.y)).toBe(bottle);
-    expect(bottleAt(bottles, bottle.x + NECK_RADIUS + 1, bottle.y)).toBeNull();
+    expect(bottleAt(bottles, bottle.x + NECK_RADIUS - 1, neckY(bottle))).toBe(bottle);
+    expect(bottleAt(bottles, bottle.x + NECK_RADIUS + 1, neckY(bottle))).toBeNull();
   });
 
   it('ends the round when the last ring lands', () => {

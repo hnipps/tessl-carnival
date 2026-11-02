@@ -3,8 +3,10 @@ import { canvasFont, recordScore, theme, type CarnivalGame } from '../../carniva
 const { width: WIDTH, height: HEIGHT } = theme.canvas;
 
 export const RINGS_PER_ROUND = 8;
-/** How close to a bottle's neck a ring has to land to score, in pixels. */
+/** How close to the middle of a bottle's neck a ring has to land to score, in pixels. */
 export const NECK_RADIUS = 14;
+/** How tall a bottle's neck is drawn, from the top of its body up, in pixels. */
+const NECK_HEIGHT = 18;
 /** How long a ring is in the air, in seconds. */
 export const FLIGHT_TIME = 0.6;
 /** Full swings of the power meter, from empty to full, per second. */
@@ -82,12 +84,17 @@ export function landingY(power: number): number {
   return NEAR_Y - Math.min(Math.max(power, 0), 1) * (NEAR_Y - FAR_Y);
 }
 
+/** The middle of a bottle's neck as drawn: the point a ring has to land near. */
+export function neckY(bottle: Bottle): number {
+  return bottle.y - NECK_HEIGHT / 2;
+}
+
 /** The bottle whose neck a ring landing at (x, y) goes over, or null for a miss. */
 export function bottleAt(bottles: readonly Bottle[], x: number, y: number): Bottle | null {
   let best: Bottle | null = null;
   let bestDistance = NECK_RADIUS;
   for (const bottle of bottles) {
-    const distance = Math.hypot(x - bottle.x, y - bottle.y);
+    const distance = Math.hypot(x - bottle.x, y - neckY(bottle));
     if (distance <= bestDistance) {
       best = bottle;
       bestDistance = distance;
@@ -225,15 +232,15 @@ function draw(ctx: CanvasRenderingContext2D, state: RingTossState, aimX: number)
     ctx.beginPath();
     ctx.roundRect(bottle.x - 12, bottle.y - 2, 24, 30, 6);
     ctx.fill();
-    ctx.fillRect(bottle.x - 4, bottle.y - 18, 8, 18);
+    ctx.fillRect(bottle.x - 4, bottle.y - NECK_HEIGHT, 8, NECK_HEIGHT);
     ctx.fillStyle = colors.surface;
-    ctx.fillRect(bottle.x - 5, bottle.y - 22, 10, 5);
+    ctx.fillRect(bottle.x - 5, bottle.y - NECK_HEIGHT - 4, 10, 5);
   }
 
   // Rings that scored sit on their bottle's neck.
   ctx.strokeStyle = colors.accent;
   for (const landed of state.landed) {
-    if (landed.bottle) drawRing(ctx, landed.bottle.x, landed.bottle.y - 4);
+    if (landed.bottle) drawRing(ctx, landed.bottle.x, neckY(landed.bottle));
   }
 
   // Where the next ring will land.

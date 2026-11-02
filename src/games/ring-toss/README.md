@@ -15,8 +15,8 @@ Toss rings onto the necks of the bottles at the back of the booth.
 
 ## Scoring
 
-A ring scores when it lands within 14 px of a bottle's neck. Bottles further back
-score more:
+A ring scores when it lands within 14 px of the middle of a bottle's neck: aim the
+dashed line's dot at the neck. Bottles further back score more:
 
 | Row    | Points |
 | ------ | ------ |
