@@ -1,4 +1,12 @@
-import { palette } from './palette';
+import {
+  createFireworks,
+  createNight,
+  fireworksOn,
+  stepFireworks,
+  stepNight,
+  toggleNight,
+} from './night';
+import { nightPalette, palette } from './palette';
 import {
   archBounds,
   BOOTH_SIGN_HEIGHT,
@@ -7,6 +15,7 @@ import {
   drawBooth,
   drawBunting,
   drawCloud,
+  drawFireworks,
   drawFloaters,
   drawFrontHedge,
   drawField,
@@ -108,6 +117,8 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
   const floaters: Floater[] = [];
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let nextFloater = 2;
+  const night = createNight();
+  const fireworks = createFireworks();
   let inReach: BoothSlot | undefined;
   let destination: Point | undefined;
 
@@ -159,6 +170,8 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     } else if (PLAY_KEYS.has(event.code) && !isControl(event.target) && inReach?.gameId) {
       event.preventDefault();
       play(inReach);
+    } else if (event.code === 'KeyN' && !event.repeat && !isControl(event.target)) {
+      toggleNight(night);
     }
   };
   const onKeyUp = (event: KeyboardEvent) => keys.delete(event.code);
@@ -269,6 +282,16 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     sky.addColorStop(1, palette.sky);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, canvas.clientWidth, Math.max(0, horizon + 2));
+    if (night.darkness > 0) {
+      const nightSky = ctx.createLinearGradient(0, horizon - 260 * zoom, 0, horizon);
+      nightSky.addColorStop(0, nightPalette.skyHigh);
+      nightSky.addColorStop(1, nightPalette.sky);
+      ctx.globalAlpha = night.darkness;
+      ctx.fillStyle = nightSky;
+      ctx.fillRect(0, 0, canvas.clientWidth, Math.max(0, horizon + 2));
+    }
+    // Clouds fade most of the way out after dark.
+    ctx.globalAlpha = 1 - night.darkness * 0.8;
 
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, 0, 0);
     const span = view.w + 200;
@@ -280,6 +303,7 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
       const y = HORIZON - camera.y - 50 - cloud.y * 100;
       drawCloud(ctx, x, y, cloud.size);
     }
+    ctx.globalAlpha = 1;
 
     // Snap the camera to whole device pixels so the pre-drawn ground stays crisp.
     const k = dpr * zoom;
@@ -378,6 +402,24 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     drawBunting(ctx, map, t, visible);
     drawFloaters(ctx, floaters);
 
+    // Night: one shade over the whole scene, then fireworks in the sky above it.
+    if (night.darkness > 0) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalAlpha = night.darkness * nightPalette.shadeStrength;
+      ctx.fillStyle = nightPalette.shade;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      ctx.globalAlpha = 1;
+    }
+    if (fireworks.rockets.length > 0 || fireworks.sparks.length > 0) {
+      ctx.setTransform(k, 0, 0, k, -cam.x * k, -cam.y * k);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(visible.left, visible.top, view.w, HORIZON - visible.top);
+      ctx.clip();
+      drawFireworks(ctx, fireworks);
+      ctx.restore();
+    }
+
     // The prompt over the booth in reach, at full resolution.
     if (inReach?.gameId) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -429,6 +471,20 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
     }
 
     updateFloaters(dt);
+    stepNight(night, dt);
+    stepFireworks(
+      fireworks,
+      dt,
+      fireworksOn(night),
+      {
+        left: camera.x + 20,
+        right: camera.x + view.w - 20,
+        top: Math.max(camera.y, HORIZON - 150) + 20,
+        horizon: HORIZON,
+      },
+      nightPalette.fireworks,
+      Math.random,
+    );
     updateCamera(dt);
     draw(time / 1000);
     frame = requestAnimationFrame(loop);
