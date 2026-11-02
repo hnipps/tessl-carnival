@@ -6,7 +6,8 @@ Soak the targets on the three rails before your tank runs dry.
 
 - Move the mouse to aim the cannon, and click to fire a shot of water.
 - You have 15 shots. The game ends when the tank is empty and the last shot has landed.
-- Click again on the game over screen to play another round.
+- When the round is over, click **Play again** to start a new round, or **Back to the
+  midway** to leave the game. A click anywhere else on that screen does nothing.
 
 ## Scoring
 
@@ -27,6 +28,6 @@ Add `?shots=25` to the page URL to change the size of the tank, for example
 
 ## Files
 
-- `game.ts`: the game logic (`createState`, `fire`, `step`, `scoreForHit`) and the
-  `waterCannon` entry, the default export the midway finds.
+- `game.ts`: the game logic (`createState`, `fire`, `step`, `scoreForHit`,
+  `roundOverButtonAt`) and the `waterCannon` entry, the default export the midway finds.
 - `game.test.ts`: tests for the game logic.

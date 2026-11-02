@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   CANNON,
+  ROUND_OVER_BUTTONS,
   TANK_SIZE,
   createState,
   fire,
   isHit,
+  roundOverButtonAt,
   scoreForHit,
   step,
   type Target,
@@ -76,5 +78,28 @@ describe('water cannon', () => {
     const slow = scoreForHit({ ...target, speed: 60 });
     const fast = scoreForHit({ ...target, speed: -180 });
     expect(Math.max(fast, slow)).toBeGreaterThanOrEqual(slow);
+  });
+
+  it('finds the Play again button under a point on the round-over screen', () => {
+    const { x, y, width, height } = ROUND_OVER_BUTTONS.playAgain;
+    expect(roundOverButtonAt(x + width / 2, y + height / 2)).toBe('playAgain');
+    expect(roundOverButtonAt(x, y)).toBe('playAgain');
+  });
+
+  it('finds the Back to the midway button under a point on the round-over screen', () => {
+    const { x, y, width, height } = ROUND_OVER_BUTTONS.midway;
+    expect(roundOverButtonAt(x + width / 2, y + height / 2)).toBe('midway');
+    expect(roundOverButtonAt(x + width, y + height)).toBe('midway');
+  });
+
+  it('finds no button for a click outside both buttons', () => {
+    const { playAgain, midway } = ROUND_OVER_BUTTONS;
+    expect(roundOverButtonAt(10, 10)).toBeNull();
+    // The gap between the two buttons.
+    expect(
+      roundOverButtonAt((playAgain.x + playAgain.width + midway.x) / 2, playAgain.y + 10),
+    ).toBeNull();
+    // Just above the buttons.
+    expect(roundOverButtonAt(playAgain.x + 10, playAgain.y - 1)).toBeNull();
   });
 });
