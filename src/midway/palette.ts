@@ -55,3 +55,13 @@ export const palette = {
   bunting: [colors.stripeA, colors.accent, '#2b8ccc', colors.stripeB],
   balloons: [colors.stripeA, colors.accent, '#2b8ccc', colors.water, '#f59ac0'],
 } as const;
+
+/** The midway after dark: the night sky, the shade over the scene, and the fireworks. */
+export const nightPalette = {
+  sky: '#1c2a6b',
+  skyHigh: colors.background,
+  /** Laid over the scene, more strongly the darker it gets. */
+  shade: colors.background,
+  shadeStrength: 0.5,
+  fireworks: [colors.accent, colors.stripeA, colors.water, colors.stripeB, '#f59ac0', '#7bd389'],
+} as const;

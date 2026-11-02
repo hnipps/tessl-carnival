@@ -1,5 +1,6 @@
 import { canvasFont, theme } from '../carnival';
 import bannerUrl from './aidevcon-banner.png';
+import { sparkAlpha, type Fireworks } from './night';
 import { palette } from './palette';
 import {
   CART_KINDS,
@@ -1728,6 +1729,20 @@ export function drawFloaters(ctx: Ctx, floaters: readonly Floater[]) {
     ctx.stroke();
     oval(ctx, f.x + sway, f.y, 5, 6.5, f.color);
     oval(ctx, f.x + sway - 1.8, f.y - 2.5, 1.4, 2, 'rgba(255,255,255,0.6)');
+  }
+  ctx.globalAlpha = 1;
+}
+
+/** Rockets climbing and sparks falling, as small dots so a few hundred stay cheap. */
+export function drawFireworks(ctx: Ctx, fireworks: Fireworks) {
+  for (const rocket of fireworks.rockets) {
+    ctx.fillStyle = rocket.color;
+    ctx.fillRect(rocket.x - 1, rocket.y - 1, 2, 4);
+  }
+  for (const spark of fireworks.sparks) {
+    ctx.globalAlpha = sparkAlpha(spark);
+    ctx.fillStyle = spark.color;
+    ctx.fillRect(spark.x - 1, spark.y - 1, 2, 2);
   }
   ctx.globalAlpha = 1;
 }
