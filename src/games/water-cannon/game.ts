@@ -110,6 +110,44 @@ export function step(state: WaterCannonState, dt: number): void {
   if (state.tank === 0 && state.shots.length === 0) state.phase = 'over';
 }
 
+export type RoundOverButton = 'playAgain' | 'midway';
+
+/** Where the round-over screen draws its buttons, in canvas pixels. */
+export const ROUND_OVER_BUTTONS: Record<
+  RoundOverButton,
+  { x: number; y: number; width: number; height: number; label: string }
+> = {
+  playAgain: {
+    x: WIDTH / 2 - 210,
+    y: HEIGHT / 2 + 30,
+    width: 200,
+    height: 52,
+    label: 'Play again',
+  },
+  midway: {
+    x: WIDTH / 2 + 10,
+    y: HEIGHT / 2 + 30,
+    width: 200,
+    height: 52,
+    label: 'Back to the midway',
+  },
+};
+
+/** The round-over button a canvas point lands on, or null when it misses both. */
+export function roundOverButtonAt(x: number, y: number): RoundOverButton | null {
+  for (const [name, button] of Object.entries(ROUND_OVER_BUTTONS)) {
+    if (
+      x >= button.x &&
+      x <= button.x + button.width &&
+      y >= button.y &&
+      y <= button.y + button.height
+    ) {
+      return name as RoundOverButton;
+    }
+  }
+  return null;
+}
+
 function draw(
   ctx: CanvasRenderingContext2D,
   state: WaterCannonState,
@@ -193,9 +231,33 @@ function draw(
     ctx.fillStyle = colors.accent;
     ctx.font = canvasFont('title', 'bold');
     ctx.fillText(`Tank empty! You scored ${state.score}`, WIDTH / 2, HEIGHT / 2);
-    ctx.fillStyle = colors.text;
+
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 2;
+    // Play again is the primary button: filled with the accent colour.
+    const primary = ROUND_OVER_BUTTONS.playAgain;
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.roundRect(primary.x, primary.y, primary.width, primary.height, theme.radius);
+    ctx.fill();
+    ctx.fillStyle = colors.background;
+    ctx.font = canvasFont('body', 'bold');
+    ctx.fillText(primary.label, primary.x + primary.width / 2, primary.y + primary.height / 2);
+
+    // Back to the midway is secondary: outlined, with quieter text.
+    const secondary = ROUND_OVER_BUTTONS.midway;
+    ctx.strokeStyle = colors.muted;
+    ctx.beginPath();
+    ctx.roundRect(secondary.x, secondary.y, secondary.width, secondary.height, theme.radius);
+    ctx.stroke();
+    ctx.fillStyle = colors.muted;
     ctx.font = canvasFont('body');
-    ctx.fillText('Click to play again', WIDTH / 2, HEIGHT / 2 + 40);
+    ctx.fillText(
+      secondary.label,
+      secondary.x + secondary.width / 2,
+      secondary.y + secondary.height / 2,
+    );
+    ctx.textBaseline = 'alphabetic';
   }
 }
 
@@ -225,8 +287,13 @@ export const waterCannon: CarnivalGame = {
     const onDown = (event: PointerEvent) => {
       Object.assign(aim, toCanvas(event));
       if (state.phase === 'over') {
-        state = createState();
-        scoreRecorded = false;
+        const button = roundOverButtonAt(aim.x, aim.y);
+        if (button === 'playAgain') {
+          state = createState();
+          scoreRecorded = false;
+        } else if (button === 'midway') {
+          location.hash = '#/';
+        }
       } else {
         fire(state, aim.x, aim.y);
       }
